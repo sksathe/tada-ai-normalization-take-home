@@ -1,13 +1,11 @@
-"""Candidate task: implement seeded mock generation from approved contracts.
-
-No sample API response or employee record is supplied. Add your seed, schema
-validation and generation manifest here, or replace with another documented tool.
-"""
+"""Compatibility wrapper for the installed deterministic fixture generator."""
 
 
 def generate():
-    raise NotImplementedError("Implement deterministic fixture generation from the approved OpenAPI pack.")
+    from normalization.__main__ import main
+    import sys
+    return main(["generate-fixtures", *sys.argv[1:]])
 
 
 if __name__ == "__main__":
-    generate()
+    raise SystemExit(generate())

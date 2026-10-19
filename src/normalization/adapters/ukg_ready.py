@@ -1,5 +1,6 @@
-"""UKG Ready adapter: candidate must discover and implement all source mappings."""
+"""UKG Ready cached GET response-record adapter."""
 from typing import Any, Dict
+from ..engine import normalize as _normalize
 
 
 def normalize(entity: str, response: Any, reference: Dict[str, Any]) -> Any:
@@ -8,4 +9,4 @@ def normalize(entity: str, response: Any, reference: Dict[str, Any]) -> Any:
     Do not infer units, endpoint shapes, or enum meanings from this stub.
     Preserve documented source semantics and define diagnostics in your design.
     """
-    raise NotImplementedError("Implement UKG Ready company/employee/payroll mappings from approved evidence.")
+    return _normalize("ukg-ready", entity, response, reference)

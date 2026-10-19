@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tada-normalization-lab"
+version = "1.0.0"
+description = "Contract-backed HR normalization and reproducible evaluation"
+requires-python = ">=3.10"
+dependencies = ["jsonschema>=4.23,<5"]
+
+[project.scripts]
+normalization = "normalization.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+normalization = ["dashboard.html"]

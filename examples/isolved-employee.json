@@ -1,0 +1,25 @@
+{
+  "context": {
+    "tenant_id": "synthetic-demo",
+    "company_id": "100",
+    "status_lookup": {"ACTIVE": "active"},
+    "lookup_basis": "Explicit synthetic tenant lookup supplied for this example"
+  },
+  "records": [{
+    "id": 1,
+    "employeeNumber": "0001",
+    "employmentCategoryCode": "SYNFT",
+    "idType": "SSN",
+    "ssn": "",
+    "legalCode": "SYN100",
+    "payFrequency": 26,
+    "payGroup": "Synthetic biweekly",
+    "payType": "Synthetic hourly",
+    "workLocation": "REMOTE",
+    "nameAddress": {"firstName": "Alex", "lastName": "Synthetic", "zipCode": "02108"},
+    "emailAddress": "alex@example.invalid",
+    "employmentStatus": "ACTIVE",
+    "hourlyRate": 25,
+    "hireDate": "2024-01-15T00:00:00Z"
+  }]
+}

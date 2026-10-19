@@ -1,4 +1,151 @@
-# Tada AI · Data Normalization Take-Home
+# Tada normalization lab
+
+A local, contract-backed normalization pipeline with reproducible synthetic fixtures,
+an evaluation dashboard, payroll reconciliation, field-level mapping evidence, and
+JSON / CSV / SQLite exports.
+
+## Run the solution
+
+Requires Python 3.10+. From the repository root:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m normalization check-inputs
+.\.venv\Scripts\python.exe -m normalization demo --seed 42 --count 24
+.\.venv\Scripts\python.exe -m normalization serve
+```
+
+Open [the local dashboard](http://127.0.0.1:8765). The generated
+`artifacts/report/index.html` is also self-contained and can be opened directly;
+neighboring export files must accompany it for the download links to work.
+
+On macOS/Linux, use `python3` and `.venv/bin/python` instead. The current workspace
+already has a configured `.venv`. Fixture generation, tests and evaluation require
+no credentials, live provider access, Node, or external frontend assets after setup.
+
+```powershell
+# Run all tests, including reference integrity and deliberate error detection
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+
+# Normalize an individual extracted response record
+.\.venv\Scripts\python.exe -m normalization normalize --provider isolved --entity employee --input examples/isolved-employee.json --output artifacts/employee.json --strict
+
+# Generate inputs separately, then evaluate them
+.\.venv\Scripts\python.exe -m normalization generate-fixtures --seed 42 --count 24
+.\.venv\Scripts\python.exe -m normalization evaluate --input artifacts/fixtures.json
+
+# List supported provider/entity combinations
+.\.venv\Scripts\python.exe -m normalization list-providers
+```
+
+`--count` is employees per provider, minimum six. The default demo contains 100
+records across employee and related entities. `normalize` refuses to overwrite its
+output file. `--strict` refuses invalid input/output or transformation errors;
+without it, diagnostics remain available alongside partial output. Evaluation writes
+its report even when checks fail, then exits nonzero. Demo/evaluate replace generated
+files in their output directory. Stop the report server with Ctrl+C.
+
+## What to inspect
+
+The dashboard includes:
+
+1. **Overview:** provider/entity matrix, metric denominators and field dispositions.
+2. **Field coverage:** searchable contract fields, canonical targets, evidence and fixture exercise.
+3. **Record explorer:** source versus canonical data, provenance, relationships and diagnostics.
+4. **Reconciliation:** arithmetic checks, differences and insufficient-data cases.
+5. **Evaluation:** expected-value assertions, equivalent cross-provider scenarios, fault detection,
+   measured throughput, environment, contract hashes and scope limits.
+
+Generated outputs live in ignored `artifacts/`:
+
+| Artifact | Purpose |
+| --- | --- |
+| `fixtures.json` | Seeded source records and independently authored expected-value assertions |
+| `report/index.html` | Self-contained interactive report |
+| `report/results.json` | Full results, numerators/denominators and evidence |
+| `report/coverage.csv` | Selected-schema field inventory and mapping decisions |
+| `report/normalized.json` | Canonical records with lossless source retention |
+| `report/normalized.sqlite` | Queryable normalized snapshot and diagnostics |
+| `report/canonical.schema.json` | Canonical envelope/common-field schema |
+
+Example SQLite query:
+
+```sql
+SELECT provider, entity, COUNT(*) AS records
+FROM records
+GROUP BY provider, entity;
+```
+
+## Design and current scope
+
+```text
+Pinned provider contracts + authored synthetic scenarios
+                         |
+          Source validation + explicit request context
+                         |
+             Provider-specific mapping registry
+                         |
+     Canonical records + provenance + retained extensions
+                         |
+ Expected assertions / relationships / reconciliation / fault injection
+                         |
+            HTML + JSON + CSV + SQLite report
+```
+
+The core is Python with `jsonschema`; the report uses portable HTML/CSS/JavaScript.
+No LLM is used at runtime. Mapping semantics are reviewable in code, source evidence
+is retained, unknown enums are flagged, and monetary arithmetic uses Decimal.
+
+**The working pipeline is not an exhaustive semantic mapping of every available
+employee field.** It currently has 330 explicit mappings across 2,417 selected contract
+leaves; other fields are retained as structured data or extensions. The dashboard
+does not label retention as semantic normalization. UKG company links use explicit
+context anchors, and live fetching/write-back are outside this implementation.
+See [assumptions and decisions](docs/ASSUMPTIONS.md) for precise scope, field/unit
+choices, reference gaps, reconciliation assumptions and the remaining coverage work.
+
+### Input and output contracts
+
+An adapter accepts extracted response **records**, not a guessed endpoint envelope:
+
+```json
+{
+  "context": {"tenant_id": "synthetic-demo", "company_id": "100"},
+  "records": [{"id": 1, "nameAddress": {"firstName": "Alex", "lastName": "Synthetic"}}]
+}
+```
+
+`tenant_id` and `company_id` are required. Child entities need `employee_id` unless
+their source record supplies it. For paycheck records without a run ID, supply
+`payroll_run_id`. Optional `status_lookup` and `lookup_basis` supply explicit tenant
+status semantics; labels are otherwise unknown. Company/employee relationships remain
+provider-scoped. Payroll is a compatibility alias for `paycheck`; runs are separate.
+
+Output is an array of versioned canonical records containing `id`, `entity`, `provider`,
+`source`, `relationships`, `data`, `provenance`, `extensions`, `source_data`, `diagnostics`
+and `source_valid`. Missing fields remain absent, zeros remain zero, and original codes
+are retained. Source contracts and original notices are not modified.
+
+### Code map
+
+| Module | Responsibility |
+| --- | --- |
+| `contracts.py` | Pinned record selections, schema validation, field inventory and fingerprints |
+| `mappings.py` | Explicit source-to-canonical fields and documented enum mappings |
+| `engine.py` / `adapters/` | Deterministic transforms, scoped IDs, diagnostics and preservation |
+| `canonical.py` | Canonical envelope and common-field constraints |
+| `fixtures.py` | Seeded scenarios and expected values independent of the mapping registry |
+| `evaluation.py` | Metrics, cross-provider comparisons, relationships and arithmetic checks |
+| `report.py` / `dashboard.html` | Portable dashboard and analytical exports |
+
+Repository-root execution is supported. This package intentionally reads the supplied
+`contracts/` folder alongside the source; a wheel alone is not a self-contained contract
+distribution. No provider assets are copied into package distributions.
+
+---
+
+# Original assignment: Tada AI · Data Normalization Take-Home
 
 Build a local platform that normalizes company, employee, direct deposit,
 deduction, and payroll data from

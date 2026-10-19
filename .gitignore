@@ -13,3 +13,6 @@ htmlcov/
 node_modules/
 dist/
 build/
+artifacts/
+local-data/
+*.egg-info/

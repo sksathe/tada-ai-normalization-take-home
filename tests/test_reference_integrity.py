@@ -4,7 +4,7 @@ import json
 import unittest
 from urllib.parse import unquote
 
-from normalization.references import ROOT, load_reference
+from normalization.references import ROOT, load_reference, matches_checksum
 
 
 def resolve_pointer(document, pointer):
@@ -41,8 +41,7 @@ class ReferenceIntegrityChecks(unittest.TestCase):
         cls.document = json.loads(cls.payload)
 
     def test_distributed_contract_matches_recorded_checksum_and_license(self):
-        self.assertEqual(hashlib.sha256(self.payload).hexdigest(),
-                         self.reference["openapi"]["sha256"])
+        self.assertTrue(matches_checksum(self.path, self.reference["openapi"]["sha256"]))
         self.assertEqual(self.document["info"]["version"],
                          self.reference["openapi"]["version"])
         self.assertEqual(self.document["info"]["license"]["name"], "Apache 2.0 License")
@@ -87,11 +86,9 @@ class PrivateUploadIntegrityChecks(unittest.TestCase):
                 with self.subTest(provider=provider, file=artifact["file"]):
                     path = (base / artifact["file"]).resolve()
                     self.assertIn(base.resolve(), path.parents)
-                    self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
-                                     artifact["sha256"])
+                    self.assertTrue(matches_checksum(path, artifact["sha256"]))
             if provider == "ukg-ready":
-                self.assertEqual(hashlib.sha256((base / "reference-schemas.json").read_bytes()).hexdigest(),
-                                 manifest["reference_schemas_sha256"])
+                self.assertTrue(matches_checksum(base / "reference-schemas.json", manifest["reference_schemas_sha256"]))
 
     def test_private_lookup_entries_are_exact_cited_values(self):
         for provider in ("isolved", "ukg-ready"):

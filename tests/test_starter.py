@@ -11,7 +11,7 @@ from normalization.references import all_readiness_issues, load_reference
 class StarterChecks(unittest.TestCase):
     def test_expected_providers_and_entities_are_exposed(self):
         self.assertEqual(set(ADAPTERS), {"prismhr", "isolved", "ukg-ready"})
-        self.assertEqual(set(ENTITIES), {"company", "employee", "payroll"})
+        self.assertTrue({"company", "employee", "payroll", "direct_deposit", "deduction", "paycheck", "payroll_run"}.issubset(ENTITIES))
 
     def test_reference_readiness_matches_distributed_materials(self):
         issues = all_readiness_issues()
@@ -24,18 +24,18 @@ class StarterChecks(unittest.TestCase):
                 self.assertTrue(ref["lookups"])
                 self.assertEqual(ref["distribution"]["status"], "user_approved_private_upload")
                 self.assertFalse(ref["distribution"]["provider_redistribution_permission_verified"])
-                self.assertTrue(issues[provider])
+                self.assertEqual(issues[provider], [])
 
-    def test_all_nine_transformations_are_explicitly_unimplemented(self):
+    def test_adapters_require_explicit_context_and_source_records(self):
         for provider, adapter in ADAPTERS.items():
             for entity in ENTITIES:
                 with self.subTest(provider=provider, entity=entity):
-                    with self.assertRaises(NotImplementedError):
+                    with self.assertRaises(ValueError):
                         adapter.normalize(entity, None, load_reference(provider))
 
-    def test_readiness_command_exits_nonzero_for_missing_pack(self):
+    def test_distributed_local_pack_is_ready(self):
         with contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(["check-inputs"]), 2)
+            self.assertEqual(main(["check-inputs"]), 0)
 
 
 if __name__ == "__main__":

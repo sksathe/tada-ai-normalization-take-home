@@ -1,5 +1,6 @@
-"""isolved adapter: candidate must discover and implement all source mappings."""
+"""isolved primary v6 response-record adapter."""
 from typing import Any, Dict
+from ..engine import normalize as _normalize
 
 
 def normalize(entity: str, response: Any, reference: Dict[str, Any]) -> Any:
@@ -8,4 +9,4 @@ def normalize(entity: str, response: Any, reference: Dict[str, Any]) -> Any:
     Do not infer units, endpoint shapes, or enum meanings from this stub.
     Preserve documented source semantics and define diagnostics in your design.
     """
-    raise NotImplementedError("Implement isolved company/employee/payroll mappings from approved evidence.")
+    return _normalize("isolved", entity, response, reference)
